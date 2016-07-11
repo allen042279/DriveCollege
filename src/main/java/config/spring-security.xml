@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:security="http://www.springframework.org/schema/security"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+		  http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+		  http://www.springframework.org/schema/security
+		  http://www.springframework.org/schema/security/spring-security.xsd">
+
+<!-- Spring-Security 的配置 -->
+	
+	<!-- security="none" 不过滤这些资源 -->
+	<security:http pattern="/js/**" 			security="none"/>
+	<security:http pattern="/css/**" 			security="none"/>
+	<security:http pattern="/img/**" 			security="none"/>
+	<security:http pattern="/login.jsp" 		security="none"/>
+	<security:http pattern="/accessDenied.jsp" 	security="none"/>
+	
+	<!-- 页面级的访问控制，自上而下 进行匹配。    必须最特殊的匹配条件放到最上边，之后才是普通的匹配条件 -->
+	<!-- 注意: use-expressions=true.表示开启表达式,否则表达式将不可用，这个作用在页面上的元素上（authorize标签）. see:http://www.family168.com/tutorial/springsecurity3/html/el-access.html -->
+	<security:http auto-config="true" use-expressions="true"  >
+	
+		<!-- 使用了SpringEL表达式来指定角色的访问:
+				hasRole([role]) 返回 true 如果当前主体拥有特定角色。  
+				hasAnyRole([role1,role2]) 返回 true 如果当前主体拥有任何一个提供的角色 （使用逗号分隔的字符串队列）  
+				principal 允许直接访问主体对象，表示当前用户  
+				authentication 允许直接访问当前 Authentication对象 从SecurityContext中获得  
+				permitAll 一直返回true  
+				denyAll 一直返回false  
+				isAnonymous() 如果用户是一个匿名登录的用户 就会返回 true  
+				isRememberMe() 如果用户是通过remember-me 登录的用户 就会返回 true  
+				isAuthenticated() 如果用户不是匿名用户就会返回true  
+				isFullyAuthenticated() 如果用户不是通过匿名也不是通过remember-me登录的用户时， 就会返回true。 
+		 -->
+		<security:intercept-url pattern="/**" access="hasRole('ROLE_USER')"/>
+		
+		<!--允许所有人访问  [ requires-channel属性 用来对https的处理，共有三个值：http，https，any。 any表示http和https都可以。]-->
+		<security:intercept-url pattern="/login.jsp" access="permitAll" requires-channel="any"/>
+		
+		<!--允许ROLE_ADMIN权限访问 -->
+		<security:intercept-url pattern="/user/findAll.html" access="hasRole('ROLE_ADMIN')" />
+		
+		<!--允许ROLE_ADMIN权限访问 -->
+		<security:intercept-url pattern="/user/**" access="hasRole('ROLE_ADMIN')" />
+		
+		<!--允许ROLE_USER 和 ROLE_ADMIN 权限访问 -->
+		<security:intercept-url pattern="/success.jsp"	access="hasAnyRole('ROLE_USER','ROLE_ADMIN')" />
+		
+		<!--允许匿名访问 -->
+		<security:intercept-url pattern="/anonymously.jsp"	access="isAnonymous" />
+
+		
+		<!-- ************************************************************************************************** -->
+
+		<!-- login-page:默认指定的登录页面.  
+			 login-processing-url: 处理登录业务的URL
+		     authentication-failure-url:出错后跳转页面.  
+		     default-target-url: 成功登陆后跳转页面，如果从一个资源请求网页过来的，则成功后转身资源请求网页。
+		     always-use-default-target: 无论从哪里转来的，成功后都转身default-target-url指定的网页
+		-->
+		<security:form-login 
+			login-page="/login.jsp"
+			login-processing-url="/user/login" 
+			authentication-failure-url="/user/login_failure.jsp"  />
+		
+		<!-- invalidate-session：指定在退出系统时是否要销毁Session。
+		     logout-success-url：退出系统后转向的URL。
+		     logout-url：指定了用于响应退出系统请求的URL。其默认值为：/j_spring_security_logout。 
+		-->
+		<security:logout 
+			invalidate-session="true"	
+			logout-success-url="/index.jsp" 
+			logout-url="/j_spring_security_logout" />
+		
+		<!-- max-sessions:允许用户帐号登录的次数。范例限制用户只能登录一次。
+			 exception-if-maximum-exceeded:	默认为false，此值表示：用户第二次登录时，前一次的登录信息都被清空。
+			 当exception-if-maximum-exceeded="true"时系统会拒绝第二次登录。 
+		-->
+		<security:session-management>
+			<security:concurrency-control error-if-maximum-exceeded="true" max-sessions="1" />
+		</security:session-management>
+		
+		<security:access-denied-handler error-page="/denied.jsp"/>
+
+		<!-- OpenID登录 -->
+<!-- 		<security:openid-login/> -->
+		
+		<!-- 增加一个filter，这点与Acegi是不一样的，不能修改默认的filter了，   这个filter位于FILTER_SECURITY_INTERCEPTOR之前  -->  
+        <security:custom-filter ref="myFilter" before="FILTER_SECURITY_INTERCEPTOR" /> 
+        
+	</security:http>
+	
+	<!-- 方法级的访问控制    jsr250-annotations为是否 启用@RoleAllowed注解(放在方法前)-->
+	<security:global-method-security jsr250-annotations="enabled" /> 
+	
+	<!-- 验证配置 ， 认证管理器，实现用户认证的入口，主要实现UserDetailsService接口即可 -->
+	<!-- 指定一个自定义的authentication-manager : customUserDetailsService 。 CustomUserDetailsService是实现SpringSecurity的UserDetailsService接口-->
+	<security:authentication-manager alias="MyAuthenticationManager">
+	
+		<security:authentication-provider user-service-ref="customUserDetailsService">
+		
+			<security:password-encoder ref="passwordEncoder" />
+            
+		</security:authentication-provider>
+		
+	</security:authentication-manager>
+
+	<!-- 通过 customUserDetailsService, Spring会控制用户的访问级别. 也可以理解成:以后我们和数据库操作就是通过customUserDetailsService来进行关联. 
+	         本来这个类已经被注解为service了，其bean名称为userSerivce，但这里没有使用注解的bean，而是另外定义了一个bean进行使用-->
+	<bean id="customUserDetailsService" class="com.softcreate.service.ServiceImpl.UserService" />
+	
+	<!-- 对密码进行MD5编码 -->
+	<bean id="passwordEncoder"	class="org.springframework.security.authentication.encoding.Md5PasswordEncoder" />
+	
+	
+	<!-- 一个自定义的filter，必须包含authenticationManager,accessDecisionManager,securityMetadataSource三个属性，  
+       	 我们的所有控制将在这三个类中实现，解释详见具体配置  -->  
+    <bean id="myFilter" class="com.neusoft.security.FilterSecurityInterceptor">  
+        <property name="authenticationManager" ref="MyAuthenticationManager" />  
+        <!-- 访问决策器，决定某个用户具有的角色，是否有足够的权限去访问某个资源     -->  
+        <property name="accessDecisionManager" ref="AccessDecisionManager" />  
+        <property name="securityMetadataSource" ref="MySecurityMetadataSource" />  
+    </bean>  
+    
+    <!-- 资源源数据定义，将所有的资源和权限对应关系建立起来，即定义某一资源可以被哪些角色访问     -->  
+    <bean id="MySecurityMetadataSource" init-method="loadResourceDefine"  class="com.softcreate.security.InvocationSecurityMetadataSourceService"/>  
+    
+    
+	<!-- 自定义登陆错误提示，可以取出mymessages.properties的国际化消息 -->
+<!-- 	<bean id="messageSource" class="org.springframework.context.support.ReloadableResourceBundleMessageSource"> -->
+<!-- 		<property name="basename" value="classpath:org/yzsoft/springmvcdemo/mymessages" /> -->
+<!-- 	</bean> -->
+	
+<!-- 	<bean id="localeResolver" class="org.springframework.web.servlet.i18n.AcceptHeaderLocaleResolver" /> -->
+    
+</beans>

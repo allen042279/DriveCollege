@@ -1,0 +1,34 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:websocket="http://www.springframework.org/schema/websocket"   
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.1.xsd
+		http://www.springframework.org/schema/websocket  http://www.springframework.org/schema/websocket/spring-websocket.xsd"
+		default-autowire="byName">
+	
+	        
+<!-- ************************************************begin************************************************* -->
+    <!-- 注解扫描包 ，自动形成注入。  注意：如果有重复被扫描的包，则包中的对象则被重复创建 -->
+    <context:component-scan base-package="com.softcreate" use-default-filters="false">
+    	<context:include-filter type="annotation" expression="org.springframework.stereotype.Service"/>
+    	<context:include-filter type="annotation" expression="org.springframework.stereotype.Repository"/>
+    	<context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+    	<context:exclude-filter type="annotation" expression="org.springframework.web.bind.annotation.ControllerAdvice"/>
+    </context:component-scan>
+    
+    <context:component-scan base-package="com.softcreate.config" />
+    <context:component-scan base-package="com.softcreate.websocket"/>
+    
+<!-- ************************************************end************************************************* -->
+   
+     
+<!-- ************************************************begin************************************************* -->
+     <!-- 导入其他配置文件 使用spring-common-s_tr.xml 或者 spring-common-h_tr.xml文件-->
+     <import resource="/spring-common-h_tr.xml"/>
+<!-- ************************************************end************************************************* -->
+       
+
+	
+</beans>	     
+		

@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:cache="http://www.springframework.org/schema/cache"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+	xmlns:lang="http://www.springframework.org/schema/lang"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.1.xsd
+		http://www.springframework.org/schema/cache http://www.springframework.org/schema/cache/spring-cache-4.1.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.1.xsd
+		http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc-4.1.xsd
+		http://www.springframework.org/schema/lang http://www.springframework.org/schema/lang/spring-lang-4.1.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.1.xsd">
+
+<!-- 使用Hibernate的事务管理器、 -->
+<!-- ************************************************begin************************************************* -->
+	    <!-- 加载配置文件 ： 告诉spring去哪里获取占位符的配置文件 (spring2.5以后版本)-->
+	    <context:property-placeholder location="classpath:config/db.properties" />
+	    
+<!-- ************************************************end************************************************* -->
+    
+
+<!-- ************************************************begin************************************************* -->
+	    <!-- 定义数据源 -->
+	    <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-method="close">
+	    
+	        <property name="driverClass" 	value="${db.driverClass}" />
+	        <property name="jdbcUrl" 		value="${db.jdbcUrl}"     />
+	        <property name="user" 			value="${db.userName}"    />
+	        <property name="password" 		value="${db.password}"    />
+	        
+	        <property name="minPoolSize"  	  value="${db.minPoolSize}"     />   <!--连接池中保留的最小连接数。 -->
+	        <property name="maxPoolSize"  	  value="${db.maxPoolSize}"     />   <!--连接池中保留的最大连接数。Default: 15 -->
+	        <property name="initialPoolSize"  value="${db.initialPoolSize}" />   <!--初始化时获取的连接数，取值应在minPoolSize与maxPoolSize之间。Default: 3 -->
+	        <property name="idleConnectionTestPeriod"  value="${db.idleConnectionTestPeriod}" />  <!--每30秒检查所有连接池中的空闲连接。Default: 0 -->
+	        
+	    </bean>
+<!-- ************************************************end************************************************* -->
+    
+<!-- ************************************************begin************************************************* -->
+	<!-- 配置Hibernate的sessionFactory实例 ，通过Spring提供的AnnotationSessionFactoryBean进行配置-->
+	
+    <!--数据源提供给spring的sessionFactory，这里我们要求是使用注解方式，所以spring要选择AnnotationSessionFactoryBean来获取sessionFactory   
+		当然你如果要用xml方式配置的，请使用LoaclSessionFactoryBean来配置，当然这里的AnnotationSessionFactoryBean是继承LoaclSessionFactoryBean  
+	--> 
+	<bean id="sessionFactory" class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
+	
+		<property name="dataSource" ref="dataSource" />
+		
+		<!--设置hibernate的属性，这样就不需要Hibernate的原生配置文件hibernate.cfg.xml  -->  
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.dialect">${hibernate.dialect}</prop>
+<!-- 				<prop key="hibernate.current_session_context_class">${hibernate.current_session_context_class}</prop> -->
+				<prop key="hibernate.hbm2ddl.auto">${hibernate.hbm2ddl.auto}</prop>
+				<prop key="hibernate.show.sql">${hibernate.show_sql}</prop>
+<!-- 				<prop key="hibernate.query.factory_class">${hibernate.query.factory_class}</prop>  -->
+				<prop key="hibernate.query.substitutions">true 1, false 0, yes 1, no 0</prop>
+			</props>
+		</property>
+		
+		<!--让spring帮你扫描这个包底下的所有类，主要作用扫描跟数据库对应的实体类  -->
+		<property name="packagesToScan" >
+			<list>
+				<value>com.softcreate.model</value>
+			</list>
+		</property>
+		
+		<!-- mappingResources用来列出全部映射文件 -->
+<!-- 		<property name="annotatedClasses"> -->
+<!-- 			<list> -->
+<!-- 				以下用来列出所有的PO类 -->
+<!-- 				<value>com.neusoft.model.*</value> -->
+<!-- 			</list> -->
+<!-- 		</property> -->
+		
+		<!-- 配置Hibernate映射文件的位置及名称，可以使用通配符 -->
+		<property name="mappingLocations" value="classpath:com/neusoft/model/*.hbm.xml"/>
+		
+	</bean>
+<!-- ************************************************end************************************************* -->
+
+<!-- ************************************************begin************************************************* -->
+    <!-- 定义事务管理器 -->
+    <bean id="transactionManager"  class="org.springframework.orm.hibernate4.HibernateTransactionManager">
+        <property name="sessionFactory" ref="sessionFactory" />
+    </bean>
+    
+    <!-- 启动事务注解 ， 即代码中的@Transactional注解-->
+    <tx:annotation-driven transaction-manager="transactionManager"/>
+    
+    <!-- 配置事务特性 ，配置add、delete和update开始的方法，事务传播特性为required -->
+    <tx:advice id="txAdvice" transaction-manager="transactionManager">
+        <tx:attributes>
+<!--             <tx:method name="save*" propagation="REQUIRED" /> -->
+<!--             <tx:method name="insert*" propagation="REQUIRED" /> -->
+<!--             <tx:method name="delete*" propagation="REQUIRED" /> -->
+<!--             <tx:method name="update*" propagation="REQUIRED" /> -->
+<!--             <tx:method name="login*" propagation="REQUIRED" /> -->
+<!--             <tx:method name="regist*" propagation="REQUIRED" /> -->
+<!--             <tx:method name="*" read-only="true" /> -->
+			<tx:method name="*" propagation="REQUIRED" />
+	        <tx:method name="get*" read-only="true" />
+	        <tx:method name="find*" read-only="true" /> 
+	        
+        </tx:attributes>
+    </tx:advice>        
+	
+    <!-- 配置那些类的方法进行事务管理 -->
+    <aop:config>
+        <aop:pointcut id="allManagerMethod" expression="execution (* com.softcreate.service.*.*(..))" ></aop:pointcut>
+        <aop:advisor advice-ref="txAdvice" pointcut-ref="allManagerMethod" ></aop:advisor>
+    </aop:config>
+    
+ <!-- ************************************************end************************************************* -->
+	
+
+    
+</beans>
