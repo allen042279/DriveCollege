@@ -5,6 +5,7 @@
 	<groupId>com.softcreate.cao</groupId>
 	<artifactId>college_weixin</artifactId>
 	<packaging>war</packaging>
+	<name>DriveCollege</name>
 	<version>0.0.1-SNAPSHOT</version> 
 	<url>http://maven.apache.org</url>
 
@@ -435,7 +436,7 @@
 
 	<build>
 	
-		<finalName>bus</finalName>
+		<finalName>DriveCollege</finalName>
 		
 		<pluginManagement>
 			
@@ -486,5 +487,4 @@
 	</build>
 
 	
-	<name>DriveCollege</name>
 </project>

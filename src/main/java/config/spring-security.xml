@@ -115,7 +115,7 @@
 	
 	<!-- 一个自定义的filter，必须包含authenticationManager,accessDecisionManager,securityMetadataSource三个属性，  
        	 我们的所有控制将在这三个类中实现，解释详见具体配置  -->  
-    <bean id="myFilter" class="com.neusoft.security.FilterSecurityInterceptor">  
+    <bean id="myFilter" class="com.softcreate.security.FilterSecurityInterceptor">  
         <property name="authenticationManager" ref="MyAuthenticationManager" />  
         <!-- 访问决策器，决定某个用户具有的角色，是否有足够的权限去访问某个资源     -->  
         <property name="accessDecisionManager" ref="AccessDecisionManager" />  

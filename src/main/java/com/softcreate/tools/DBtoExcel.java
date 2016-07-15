@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Vector;
 
-import com.softcreate.model.PreStudent;
+import com.softcreate.pojo.Menu;
 
 import jxl.Workbook;
 import jxl.write.Label;
@@ -26,7 +26,7 @@ public class DBtoExcel {
 	 * @param sheetName 工作簿名称 工作簿名称，本方法目前只支持导出一个Excel工作簿
 	 * @param columnName 列名，类型为Vector<string>
 	 */
-	public boolean WritePreStudentsToExcel(List<PreStudent> listItems, String filePath, String sheetName, Vector<String> columnName) {
+	public boolean WritePreStudentsToExcel(List<Menu> listItems, String filePath, String sheetName, Vector<String> columnName) {
 		
 		WritableWorkbook workbook = null;
 		WritableSheet sheet = null;
@@ -45,16 +45,16 @@ public class DBtoExcel {
 			DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss", Locale.CHINA);
 			
 			// 将结果集写入
-			for (PreStudent item : listItems) { 
+			for (Menu item : listItems) { 
 				
 				Vector<String>  col = new Vector<String>(); // 用以保存一行数据
 				
 				// 将一行内容保存在col中
-				col.add(item.getUsername());
-				col.add(item.getSexType().name());
-				col.add(item.getMobile());
-				col.add(dateFormat.format(item.getApplyDate()));
-				col.add(item.getIntent());
+//				col.add(item.getUsername());
+//				col.add(item.getSexType().name());
+//				col.add(item.getMobile());
+//				col.add(dateFormat.format(item.getApplyDate()));
+//				col.add(item.getIntent());
 //				col.add(item.isDealwith()==true? "已处理":"未处理");
 				
 				// 写入Excel
